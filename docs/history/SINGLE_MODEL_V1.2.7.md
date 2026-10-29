@@ -4,7 +4,7 @@
 
 版本：versionName 1.2.7，versionCode 12。
 
-## 最终链路
+## 解析流程
 
 简单明确文本 → Local Fast Path → Preview（0 HTTP）。
 
@@ -17,7 +17,7 @@ AI 默认值位于 `settings/AiSettingsRepository.kt` 的 `AiSettings.DEFAULT_MO
 - 普通设置页仅有 API 地址、API Key、AI 模型三个 AI 配置输入框，保留原隐私确认、保存与单一连接测试。
 - 包括 Debug 包在内，普通设置页不再显示双模型输入或 Benchmark。ModelSpeedBenchmark、SettingsViewModel 的开发测速方法、BenchmarkStatus 及既有测试保留。
 - 解析诊断显示 LOCAL / AI / LOCAL_FALLBACK、AI 模型、HTTP/JSON/总耗时、网络重试和失败阶段，不再显示双模型分组。
-- 复用 Parsing 状态的 CircularProgressIndicator，增加约 1.5 秒后的“正在理解通知内容…”；没有假百分比。保留输入、固定 TopAppBar、返回、忙碌时禁用解析、取消与旧响应隔离。
+- 复用 Parsing 状态的 CircularProgressIndicator，增加约 1.5 秒后的“正在理解通知内容…”，不显示百分比。保留输入、固定 TopAppBar、返回、忙碌时禁用解析、取消与旧响应隔离。
 - JSON 容错、具体网络诊断、NavigationSafety、RecoveryPage、StabilityDiagnostics、重复点击防护和 Preview 缓存保留。
 - Room 版本 5，未修改数据库及 Migration。ScheduleExtractionPrompt 文件与 V1.2.6 SHA-256 相同，未修改业务语义。
 
@@ -39,7 +39,7 @@ AI 默认值位于 `settings/AiSettingsRepository.kt` 的 `AiSettings.DEFAULT_MO
 
 版本归档：`releases/DDL_Reminder_v1.2.7_debug.apk`，历史 APK 全部保留。
 
-归档 SHA-256：`F1C1A732C71D527ED39EC8EC6ACBF3080D80244DD242AF6199DA94B9774DA3F3`。原交付时默认 APK 与归档一致，后续重编译不保证字节一致。
+归档 SHA-256：`F1C1A732C71D527ED39EC8EC6ACBF3080D80244DD242AF6199DA94B9774DA3F3`。发布时默认 APK 与归档一致，后续重编译不保证字节一致。
 
 包名 `com.example.ddlreminder` 与签名均沿用 V1.2.6，支持覆盖安装保留现有任务和配置，不要卸载后再安装。
 

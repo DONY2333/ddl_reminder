@@ -34,11 +34,11 @@ SettingsViewModel 保存独立 Job，finally 恢复非运行状态；Cancellatio
 
 默认 APK：`app/build/outputs/apk/debug/app-debug.apk`（相对项目根目录）。
 
-归档 APK：`releases/DDL_Reminder_v1.2.6_debug.apk`，历史 APK 未覆盖。该版本原交付时两份 SHA-256 一致：`38C231C580990E32D9AD99EDF4652254A8793E9CE135676125F7E82BBF5891F9`；后续重编译不保证字节一致。
+归档 APK：`releases/DDL_Reminder_v1.2.6_debug.apk`，历史 APK 未覆盖。发布时两份 APK 的 SHA-256 一致：`38C231C580990E32D9AD99EDF4652254A8793E9CE135676125F7E82BBF5891F9`；后续重编译不保证字节一致。
 
 包名与 V1.2.5 相同、签名证书 SHA-256 相同（`0f1f3edbc94ff66334a5658a6f6e1986b696a9888a093ef70db4fb8971b7cece`），支持覆盖安装保留数据；不要先卸载。
 
-## 真机验收清单
+## 实机回归清单
 
 1. 不同模型：观察快速模型 1/4、2/4，高级模型 3/4、4/4；每次完成立即显示结果、耗时和平均值。
 2. 测速中点击取消，确认立即停止加载、无后续请求；重新测试应正常工作。

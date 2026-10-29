@@ -2,7 +2,7 @@
 
 > 历史记录：以下内容描述该版本发布时的实现和验证结果。当前行为见[项目首页](../../README.md)，版本演进见[版本记录](../../CHANGELOG.md)。文中代码及 APK 路径均相对仓库根目录。
 
-版本 `1.2.5` / versionCode `10`。不改变 Kotlin + Compose + Room + AlarmManager 架构，不增加服务器/SDK/登录，不读取上传已有 DDL。Room 仍为 **5**，无新 Migration。
+版本 `1.2.5` / versionCode `10`。主要调整本地快路径与双模型路由，Room 版本为 **5**，无新增迁移。
 
 ## 路由与配置
 
@@ -18,11 +18,11 @@
 - 周五23:59交论文。
 - 下周一上午9点体测。
 
-上面句末句号仅为文档标点；测试/快路径输入是原需求中不带句号的文本。有多余标点时保守走 AI。
+这些示例对应的测试输入不含句末句号；额外标点可能使文本转入 AI 路由。
 
 本地成功零 HTTP；否则复杂文本先 Fast。输出只要有可靠日程（包括需人工确认具体时间的时间段），就不再请求 Strong。所有 AI 调用严格串行。
 
-设置页填写 API Base URL、API Key、快速解析模型和高级兜底模型。完全按用户模型 ID 请求，只 trim 首尾空白，不改内部字符串；无按模型品牌分支。界面建议只是 placeholder，不自动写死模型。替换成中转提供的 Gemini ID 无需改代码。
+设置页可配置 API Base URL、API Key、快速解析模型和高级兜底模型。请求使用填写的模型 ID，仅去掉首尾空白；界面提示不作为保存值。兼容协议的其他模型可直接通过配置切换。
 
 旧加密 SharedPreferences 的 `model` 在 `fast_model` / `strong_model` key 缺失时兼容为两者；Base URL / Key / 隐私确认不变。保存后两个 key 独立，显式空值不回填。旧 `model` 保留为单次 HTTP 调用和兼容字段；该版本不涉及 Room 迁移。升级后如仍使用同一旧模型，复杂文本不会自动变快，需要手动配置真正更快的模型。
 
@@ -42,7 +42,7 @@ Fast/Strong 共享 `ScheduleExtractionPrompt`，业务规则与输出字段一�
 
 Prompt 长度按 Kotlin `text.length`（去缩进、LF 换行，**不是 token 数**）从 **780 → 635 字符**，减少约 **18.6%**。压缩的是说明文字，不删除产品字段，不包含 Room/日志/Android/重试等实现细节，不要求 reasoning/originalText 等冗余输出。
 
-未连接真实中转验证，因此默认**不发送**可能不兼容的 `max_tokens` / `max_completion_tokens`。`HttpAiApiClient(maxOutputTokens = 1000)` 是仅供已验证兼容集成启用的可选参数，上限 1200；当前 App 装配未启用。这样不会为了未验证的参数引入 400 错误。temperature 保持 0。输出仍有原有响应大小/深度/事件数量安全上限。
+未连接真实中转验证，因此默认**不发送**可能不兼容的 `max_tokens` / `max_completion_tokens`。`HttpAiApiClient(maxOutputTokens = 1000)` 是仅供已验证兼容集成启用的可选参数，上限 1200；当前 App 装配未启用。该参数需在确认服务兼容后启用。temperature 保持 0。输出仍有原有响应大小/深度/事件数量安全上限。
 
 ## 缓存、状态、耗时与隐私
 
@@ -66,7 +66,7 @@ Prompt 长度按 Kotlin `text.length`（去缩进、LF 换行，**不是 token �
 
 新增 FastPathDetector、TieredParser、双模型配置兼容、Settings 双模型连接、Benchmark 固定输入、页面缓存失效测试。所有 V1.2.4 回归（Insets、Activity 重建、取消/旧请求、导航、错误状态等）继续运行。
 
-军理原始长通知在固定 2026-10-15 的回归时钟下，仍是一个军事理论课考试、10月17日、上午、需确认时间，notes 保留 A/B卷、闭卷、1小时和题型；本地语义回归和模拟 AI 路由回归均需通过。模拟 AI 测试不等于真实模型准确率证明。
+军理原始长通知在固定 2026-10-15 的回归时钟下，仍是一个军事理论课考试、10月17日、上午、需确认时间，notes 保留 A/B卷、闭卷、1小时和题型；本地语义回归和模拟 AI 路由回归均需通过。该回归使用模拟响应，未测量真实模型准确率。
 
 执行命令（本机使用缓存 `--offline`）：
 
@@ -111,7 +111,7 @@ Prompt 长度按 Kotlin `text.length`（去缩进、LF 换行，**不是 token �
 
 同一页面点击相同输入会复用 Preview，不能把缓存命中当成第二次 HTTP 性能样本。真实性能受第三方中转与所选模型影响，待以上表格实测后才能确认达成目标。
 
-## APK 交付
+## APK 归档
 
 - 默认：`app/build/outputs/apk/debug/app-debug.apk`（相对项目根目录）
 - 归档：`releases/DDL_Reminder_v1.2.5_debug.apk`

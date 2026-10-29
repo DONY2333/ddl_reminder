@@ -8,7 +8,7 @@
 - Room 本地数据库
 - DataStore Preferences 全局设置
 - AlarmManager、BroadcastReceiver、Notification
-- 简化 MVVM，不使用 Hilt 或多模块
+- 单模块 MVVM，手动组装依赖
 
 ```text
 app/src/main/java/com/example/ddlreminder/
@@ -27,8 +27,8 @@ app/src/main/java/com/example/ddlreminder/
 │   ├── FastPathDetector.kt            本地快路径分类
 │   ├── TieredNaturalLanguageParser.kt 本地快路径→单一 AI→保守本地回退
 │   ├── ParsePerformance.kt            安全耗时诊断
-│   ├── ModelSpeedBenchmark.kt         Debug 固定样例主动测速
-│   ├── AiNaturalLanguageParser.kt     严格 JSON 校验与 fallback
+│   ├── ModelSpeedBenchmark.kt         固定样例测速工具
+│   ├── AiNaturalLanguageParser.kt     AI 响应提取与校验
 │   └── ScheduleCsvParser.kt           UTF-8 CSV 解析与逐行校验
 ├── logging/
 │   ├── EventLogEntity.kt     匿名事件表及限定事件名
@@ -44,7 +44,8 @@ app/src/main/java/com/example/ddlreminder/
 ├── ui/
 │   ├── calendar/             月历和当天任务列表
 │   ├── editor/               新建/编辑页
-│   ├── settings/             默认提醒设置页
+│   ├── settings/             提醒和 AI 设置页
+│   ├── smartadd/             智能添加与预览页
 │   └── theme/
 ├── DdlReminderApplication.kt 手动组装依赖
 └── MainActivity.kt           单 Activity 入口
@@ -54,7 +55,7 @@ app/src/main/java/com/example/ddlreminder/
 
 保存任务后，`ReminderCalculator` 根据该任务自身保存的分钟 offset 计算时间，并过滤已经过去的结果。`AndroidAlarmScheduler` 以“任务 ID + 截止时间 + offsetMinutes”建立唯一 `PendingIntent`，因此自定义提醒也不会互相覆盖。
 
-有精确闹钟权限时使用 `setExactAndAllowWhileIdle()`；没有时降级为 `setAndAllowWhileIdle()`，因此提醒可能延迟。闹钟触发后，`AlarmReceiver` 不直接相信 Intent，而是重新查询 Room，确认任务存在、未完成、未逾期且截止时间未被编辑，才发送高优先级 Notification。
+有精确闹钟权限时使用 `setExactAndAllowWhileIdle()`，否则使用 `setAndAllowWhileIdle()`，提醒可能延迟。闹钟触发后，`AlarmReceiver` 重新查询 Room，确认任务存在、未完成、未逾期且截止时间未变，再发送高优先级通知。
 
 完成、编辑和删除都会按任务旧截止时间和旧 offset 集合取消全部旧 `PendingIntent`。`BOOT_COMPLETED` 后 `BootReceiver` 查询所有未完成、未逾期任务并重新注册；App 每次启动也执行相同同步。
 
@@ -67,9 +68,9 @@ app/src/main/java/com/example/ddlreminder/
 - `MIGRATION_2_3` 只新增独立 `event_logs` 表及索引，不修改或重建 `ddls`。
 - `MIGRATION_3_4` 新增 `reminderOffsetsCsv`，把旧枚举无损映射为分钟 offset；旧列、DDL 和 `event_logs` 均保留。
 - `MIGRATION_4_5` 为 DDL 增加可空的 `notes` 字段，不重建表，不修改提醒或日志。
-- 从 V1.0 升级时 Room 会依次执行 `1 → 2 → 3 → 4 → 5`，已有任务不会丢失。
-- 已有任务自动继承 V1.0 的四个提醒：5 天、3 天、1 天、12 小时。
-- migration 使用 `ALTER TABLE`，不会删除或重建旧任务表。
+- 从 V1.0 升级时，Room 依次执行 `1 → 2 → 3 → 4 → 5`，保留已有任务。
+- `MIGRATION_1_2` 为 V1.0 的任务补充原有四个提醒：5 天、3 天、1 天、12 小时。后续升级保留各任务已保存的提醒选择。
+- 任务表通过 `ALTER TABLE` 增加字段，日志表单独创建；迁移不删除或重建旧任务表。
 - 全局默认提醒保存在 DataStore，只在新建任务或点击“恢复默认设置”时读取。
 - 修改全局默认值不会修改已经创建的 DDL。
 
@@ -105,19 +106,19 @@ batch_ddl_created, custom_reminder_used, reminder_preset_used
 
 ## 智能解析配置与隐私
 
-设置页的“智能解析”区域提供 API 地址、API Key、AI 模型三个配置输入框，以及隐私确认、保存与连接测试。默认模型为 `gpt-6-luna`，可填写中转实际 Model ID；协议不按模型字符串写分支。V1.2.6 升级时按旧 `fastModel` → 旧 `modelName` → 默认值选择，保留 Base URL、Key 和隐私确认。旧 strongModel 仅保留为兼容数据，不参与正常解析。
+设置页的“智能解析”区域提供 API 地址、API Key、AI 模型三个配置输入框，以及隐私确认、保存与连接测试。默认模型 ID 为 `gpt-6-luna`，可按服务商要求修改；各模型使用相同的请求协议。V1.2.6 升级时按旧 `fastModel` → 旧 `modelName` → 默认值选择，保留 Base URL、Key 和隐私确认。旧 strongModel 仅保留为兼容数据，不参与正常解析。
 
-App 规范配置首尾空白和 Base URL 外层引号、尾部斜杠，并追加 `/chat/completions`，不会自动增加 `/v1`。API Key 正常路径使用 Android Keystore 支撑的加密本地存储，不写入源码、BuildConfig、资源、日志或 CSV；现有 Keystore 初始化失败分支会退回普通 SharedPreferences，不能承诺异常情况下也加密，请使用可撤销、限额的演示 Key。可测试当前模型的连接/耗时；连接成功不等于日程解析成功。
+保存和请求前会去掉 Base URL、Key、模型 ID 的首尾空白。Base URL 还会去掉一对包裹整个地址的引号；生成 Endpoint 时处理尾部斜杠并补齐 `/chat/completions`，不自动增加 `/v1`。`https://api.example.com/v1` 和末尾带 `/` 的写法对应同一个请求地址：`https://api.example.com/v1/chat/completions`。
 
-保存和请求前均清理 Base URL、Key、Model 的首尾空白；Base URL 另外去掉一对包裹整个字符串的单/双引号，不替换内部内容。`https://api.example.com/v1` 和末尾带 `/` 的输入都请求 `https://api.example.com/v1/chat/completions`。
+API Key 使用加密本地存储，密钥由 Android Keystore 管理；初始化失败时回退到未加密的 SharedPreferences。Key 不写入源码、BuildConfig、资源、日志或 CSV。建议使用可撤销、限额的 Key。连接测试只检查请求和响应格式，日程解析还需经过字段校验与事件映射。
 
-“设置 → 高级诊断”中的最近一次 AI 请求显示状态码、真实耗时、最终请求 Endpoint 和具体异常类（如 `UnknownHostException`、`ConnectException`、`SSLHandshakeException`、`SocketTimeoutException`）。URL 验证失败显示 `URL_INVALID`，请求构建阶段失败显示 `REQUEST_BUILD_FAILED` 并附异常类。计时使用单调时钟；已尝试连接但不足 1ms 的请求按 1ms 展示，未知耗时不伪装成 0ms。诊断不保存 API Key、Authorization、用户输入/响应正文或异常 message。
+“设置 → 高级诊断”中的最近一次 AI 请求显示状态码、真实耗时、最终请求 Endpoint 和具体异常类（如 `UnknownHostException`、`ConnectException`、`SSLHandshakeException`、`SocketTimeoutException`）。URL 验证失败显示 `URL_INVALID`，请求构建阶段失败显示 `REQUEST_BUILD_FAILED` 并附异常类。计时使用单调时钟；已尝试连接但不足 1ms 的请求显示为 1ms，未取得耗时的请求显示“未知”。诊断不保存 API Key、Authorization、用户输入/响应正文或异常 message。
 
-URL 必须包含 http/https scheme 和非空 host；不接受内嵌凭证、query 或 fragment。请求不自动跟随重定向，防止凭证转发并确保显示的 Endpoint 就是请求地址。请填写最终 API 地址。http URL 虽通过格式校验，仍可能被 Android 明文网络策略拒绝；推荐 https，不全局放开明文流量。
+URL 必须包含 http/https scheme 和非空 host；不接受内嵌凭证、query 或 fragment。请求不自动跟随重定向，防止凭证转发并确保显示的 Endpoint 就是请求地址。请填写最终 API 地址。HTTP 地址可能被 Android 明文网络策略拒绝，建议使用 HTTPS。
 
 只有勾选隐私确认后才会使用网络 AI。每次请求只包含当前用户主动提交的文字、当前本地时间和统一结构化输出提示。AI 失败或达到 30 秒 AI 链路上限后停止网络请求，转保守本地解析并明确提示；外部取消继续传播，不当作 AI 失败回退。所有结果经 Preview 确认才写 Room，原输入保留供修改或重试。
 
-高级诊断还显示最近一次解析方式（LOCAL / AI / LOCAL_FALLBACK）、AI 模型、HTTP 和 JSON 处理耗时、总耗时、网络重试和失败阶段。HTTP 包含中转和模型等待，不能据此拆出模型真实推理耗时。只在同页同输入同配置且 Preview 存在时复用预览；改输入/离页失效，不保存持久 AI 缓存。
+高级诊断还显示最近一次解析方式（LOCAL / AI / LOCAL_FALLBACK）、AI 模型、HTTP 和 JSON 处理耗时、总耗时、网络重试和失败阶段。HTTP 包含中转和模型等待，不能据此拆出模型真实推理耗时。输入、配置未变且当前页仍有预览时，可复用该预览。修改输入或离开页面后缓存失效；缓存仅保存在内存中。
 
 ModelSpeedBenchmark 为独立开发工具，设置页没有测速入口。相关代码和测试仍保留。AI 临时网络失败使用同一模型最多重试一次。Smart Add 解析期间显示圆形进度动画与“正在识别日程…”，约 1.5 秒后显示“正在理解通知内容…”，失败后恢复操作，保留输入和固定顶栏。
 
@@ -166,7 +167,7 @@ adb shell run-as com.example.ddlreminder cat shared_prefs/stability_diagnostics.
 
 ## 发布与兼容
 
-应用标识为 `com.example.ddlreminder`，签名与 applicationId 一致时可覆盖安装。改名应区分 Kotlin 包名与应用标识，不能为了调整源码目录而改变已发布 App 的安装身份。
+应用标识为 `com.example.ddlreminder`，新旧安装包的签名和 applicationId 一致时可覆盖安装。Kotlin 包名与应用标识分别配置；调整源码目录时需保留 applicationId，以兼容已安装版本。
 
 每个安装包使用独立版本号，归档名为 `DDL_Reminder_v<versionName>_debug.apk`。三项 Gradle 检查通过后复制到 `releases/`；目标文件已存在时停止，不覆盖旧包。默认构建产物不自动归档。使用 `apksigner verify --print-certs` 对比证书，并生成 SHA-256 校验值。
 

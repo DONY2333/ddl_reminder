@@ -53,9 +53,9 @@ adb install -r ".\releases\DDL_Reminder_v1.2.8_debug.apk"
 
 服务需兼容 OpenAI Chat Completions 协议。例如 Base URL 为 `https://api.example.com/v1` 时，请求地址为 `https://api.example.com/v1/chat/completions`。默认模型 ID 为 `gpt-6-luna`，具体名称以服务商提供的 ID 为准。
 
-任务、备忘、设置和匿名日志保存在本机，Android 云备份已关闭。AI 请求只发送当前主动提交的解析文字，不会自动上传已有任务或日志。系统语音识别的数据处理方式取决于手机安装的识别服务。
+任务、备忘、设置和匿名日志保存在本机，Android 云备份已关闭。AI 解析使用主动提交的文字，请求中还包含当前时间、时区和解析规则，不会自动读取已有任务或日志。系统语音识别的数据处理方式取决于手机安装的识别服务。
 
-API Key 通常由 Android Keystore 加密存储；Keystore 初始化失败时会回退到普通 SharedPreferences。建议使用可撤销、限额的 Key。技术错误详情可在“设置 → 高级诊断”展开查看。
+API Key 使用加密本地存储，密钥由 Android Keystore 管理；初始化失败时会回退到未加密的 SharedPreferences。建议使用可撤销、限额的 Key。请求失败的具体原因可在“设置 → 高级诊断”查看。
 
 ## 开发
 
@@ -69,7 +69,7 @@ API Key 通常由 Android Keystore 加密存储；Keystore 初始化失败时会
 .\gradlew.bat lintDebug
 ```
 
-macOS / Linux 使用 `./gradlew`。默认构建产物位于 `app/build/outputs/apk/debug/app-debug.apk`。版本归档由发布流程另行复制到 `releases/`，不会由 Gradle 自动覆盖。
+macOS / Linux 使用 `./gradlew`。默认构建产物位于 `app/build/outputs/apk/debug/app-debug.apk`。发布时需另行将安装包复制到 `releases/`，Gradle 不会自动归档。
 
 有设备或模拟器时，可运行 `connectedDebugAndroidTest`。GitHub Actions 自动执行单元测试、Debug 构建和 lint，并保留报告及构建产物。
 
@@ -101,7 +101,7 @@ Room 当前版本为 **5**，包含显式迁移链 `1 → 2 → 3 → 4 → 5`�
 - AI 服务的可用性、费用和数据处理政策取决于所配置的服务商。
 - 自动化测试不能替代实机通知、键盘、生命周期和真实 AI 输出验证。
 
-此前白屏问题已解决，本地诊断与页面恢复机制继续保留。若再次遇到异常，请在 Issue 中提供复现步骤及脱敏后的 Logcat，排查方法见[开发文档](docs/DEVELOPMENT.md#故障排查)。
+遇到异常时，可在 Issue 中提供复现步骤及脱敏后的 Logcat。日志获取方法见[开发文档](docs/DEVELOPMENT.md#故障排查)。
 
 ## 许可证
 

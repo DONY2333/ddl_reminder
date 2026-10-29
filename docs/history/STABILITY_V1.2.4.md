@@ -2,13 +2,13 @@
 
 > 历史记录：以下内容描述该版本发布时的实现和验证结果。当前行为见[项目首页](../../README.md)，版本演进见[版本记录](../../CHANGELOG.md)。文中代码及 APK 路径均相对仓库根目录。
 
-版本：versionName `1.2.4`，versionCode `9`。该版本不新增产品功能，不增加服务器、统计 SDK 或数据库迁移。
+版本：versionName `1.2.4`，versionCode `9`。主要修复解析流程、页面布局和异常恢复，数据库结构不变。
 
 ## 三个 P0 的证据与处理
 
 ### Bug 1：连接测试成功，但日程解析失败
 
-已确认代码问题：连接测试只验证简单 `ok` 响应，不经过日程 schema 和 mapping。原解析器将包装提取、JSON、字段校验、事件映射异常统一降为 INVALID_CONTENT；单个事件的非法 reminder offset 会抛异常，拖垮整个批次。缺少跨设置页/Smart Add 共享的 pipeline 诊断，无法知道真实用户那一次失败属于哪一步。
+已确认代码问题：连接测试只验证简单 `ok` 响应，不经过日程 schema 和 mapping。原解析器将包装提取、JSON、字段校验、事件映射异常统一降为 INVALID_CONTENT；单个事件的非法 reminder offset 会抛异常，拖垮整个批次。设置页与 Smart Add 缺少共享的解析诊断，无法从已有信息判断失败阶段。
 
 修复：不修改业务 Prompt；分别记录 transportSuccess / parseSuccess。支持整个 content、code fence、前缀说明后的第一个完整对象，扫描时识别字符串、转义和嵌套数组/对象。可选字段缺失用默认值；关键字段/日期/时间异常逐事件隔离，保留其他有效日程并显示检查数量。无效可选提醒忽略并提示检查。解析响应有大小、深度和事件数量上限，避免极端输出导致内存/栈问题。
 
@@ -18,7 +18,7 @@
 
 仅 429/500/502/503/504、SocketTimeoutException、ConnectException 短暂等待后自动重试一次，最多两次 HTTP 尝试。401/403/404、URL_INVALID、JSON/schema 错误不重试。离页取消会尝试断开底层连接，并禁止过期响应回写。
 
-已执行 20 次连续**模拟**解析格式回归，不是第三方真实模型压测。没有使用真实 Key 请求外部服务；真实服务的失败率/阶段仍需手机端记录。
+已执行 20 次连续模拟解析，覆盖响应格式处理。未请求外部模型服务；真实请求的失败率和失败阶段仍需在设备上记录。
 
 ### Bug 2：Smart Add 顶部遮挡
 
@@ -90,7 +90,7 @@ adb shell run-as com.example.ddlreminder cat shared_prefs/stability_diagnostics.
 
 另新增 3 项设备测试（不计入已通过的 198 项）。设备套件 `SmartAddDeviceStabilityTest` 已提供真实 IME 开/关、30 次上下滑动、20 次首页/Smart Add 往返、Activity recreation、后台/前台测试；编译不等于设备执行。
 
-## 真机发布前压测清单（尚未执行，不能用模拟测试代替）
+## 实机回归清单（发布时未执行）
 
 | 场景 | 操作 | 需记录/检查 |
 | --- | --- | --- |
@@ -100,7 +100,7 @@ adb shell run-as com.example.ddlreminder cat shared_prefs/stability_diagnostics.
 | D | AI 请求过程中后台 → 前台，重复 5 次 | 不白屏、不重复请求，结束后状态可见 |
 | E | AI 请求过程中返回 → 再进 Smart Add | 旧请求不覆盖新输入/页面；可重新解析 |
 
-这不是“可以上线”的证明。真实服务仍有不明失败、顶部仍遮挡、出现可复现白屏、lint Error、测试/构建失败或 DDL 丢失时，均不能通过发布门槛。
+发布前需完成上述实机回归，并排除原因不明的解析失败、顶部遮挡、可复现白屏和数据丢失。测试、构建或 lint 检查失败时应先修复问题。
 
 ## 文件与数据兼容性
 
