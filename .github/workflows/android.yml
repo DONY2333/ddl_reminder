@@ -23,9 +23,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - name: Install Android SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+        # GitHub's Ubuntu runner already includes Android command-line tools.
+        # Use its JDK 21 for current SDK tools; the Gradle build stays on JDK 17.
+        run: JAVA_HOME="$JAVA_HOME_21_X64" sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
