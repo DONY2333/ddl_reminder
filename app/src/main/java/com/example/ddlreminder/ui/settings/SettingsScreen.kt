@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ddlreminder.ui.components.ReminderOptions
 import com.example.ddlreminder.diagnostics.recoverable
+import com.example.ddlreminder.smartadd.AiRequestStatus
+import com.example.ddlreminder.smartadd.ParsePerformance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,11 +153,7 @@ fun SettingsScreen(
             }
             Button(onClick = { viewModel.saveAiSettings(baseUrl, apiKey, model, privacyAccepted) }, enabled = !loading && !testing) { Text("保存智能解析设置") }
             TextButton(onClick = { viewModel.testAiConnection(baseUrl, apiKey, model.ifBlank { com.example.ddlreminder.settings.AiSettings.DEFAULT_MODEL }) }, enabled = !loading && !testing && privacyAccepted) { Text(if (testing) "正在请求…" else "测试 AI 连接") }
-            performance?.let { Text(it.diagnosticText(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            aiStatus?.let { status ->
-                Text(status.diagnosticText(), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            AdvancedAiDiagnostics(aiStatus, performance)
             Text(
                 "数据与隐私",
                 style = MaterialTheme.typography.titleLarge,
@@ -186,6 +185,30 @@ fun SettingsScreen(
                 TextButton(onClick = { confirmClear = false }) { Text("取消") }
             },
         )
+    }
+}
+
+@Composable
+fun AdvancedAiDiagnostics(status: AiRequestStatus?, performance: ParsePerformance?) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    Column {
+        TextButton(onClick = { expanded = !expanded }) {
+            Text(if (expanded) "收起高级诊断" else "高级诊断")
+        }
+        if (expanded) {
+            if (status == null && performance == null) {
+                Text("暂无请求记录", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            performance?.let {
+                Text(it.diagnosticText(), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            status?.let {
+                Text(it.diagnosticText(), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
     }
 }
 

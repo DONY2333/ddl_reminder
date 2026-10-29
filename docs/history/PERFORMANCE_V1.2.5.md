@@ -1,5 +1,7 @@
 # V1.2.5 解析路由与性能报告
 
+> 历史记录：以下内容描述该版本发布时的实现和验证结果。当前行为见[项目首页](../../README.md)，版本演进见[版本记录](../../CHANGELOG.md)。文中代码及 APK 路径均相对仓库根目录。
+
 版本 `1.2.5` / versionCode `10`。不改变 Kotlin + Compose + Room + AlarmManager 架构，不增加服务器/SDK/登录，不读取上传已有 DDL。Room 仍为 **5**，无新 Migration。
 
 ## 路由与配置
@@ -22,7 +24,7 @@
 
 设置页填写 API Base URL、API Key、快速解析模型和高级兜底模型。完全按用户模型 ID 请求，只 trim 首尾空白，不改内部字符串；无按模型品牌分支。界面建议只是 placeholder，不自动写死模型。替换成中转提供的 Gemini ID 无需改代码。
 
-旧加密 SharedPreferences 的 `model` 在 `fast_model` / `strong_model` key 缺失时兼容为两者；Base URL / Key / 隐私确认不变。保存后两个 key 独立，显式空值不回填。旧 `model` 保留为单次 HTTP 调用和兼容字段；本次不涉及 Room 迁移。升级后如仍使用同一旧模型，复杂文本不会自动变快，需要手动配置真正更快的模型。
+旧加密 SharedPreferences 的 `model` 在 `fast_model` / `strong_model` key 缺失时兼容为两者；Base URL / Key / 隐私确认不变。保存后两个 key 独立，显式空值不回填。旧 `model` 保留为单次 HTTP 调用和兼容字段；该版本不涉及 Room 迁移。升级后如仍使用同一旧模型，复杂文本不会自动变快，需要手动配置真正更快的模型。
 
 ## Fast → Strong 与重试
 
@@ -76,7 +78,7 @@ Prompt 长度按 Kotlin `text.length`（去缩进、LF 换行，**不是 token �
 .\gradlew.bat connectedDebugAndroidTest
 ```
 
-本次最终验证：
+验证结果：
 
 | 检查 | 实际结果 |
 | --- | --- |
@@ -94,7 +96,7 @@ Prompt 长度按 Kotlin `text.length`（去缩进、LF 换行，**不是 token �
 
 纯 JVM 的 10 次 LOCAL Parser 样本：整数毫秒显示 P50=0ms（即不足 1ms）、最大 2ms；不是手机点击至 Preview 的端到端耗时，也不是冷启动/真实 API benchmark。
 
-没有连接设备/真实 Key，未请求真实中转，不宣称真实 AI P50 <3 秒或真机已提速，也不宣称原始白屏根因已捕获；诊断方法继续见 [V1.2.4 稳定性报告](STABILITY_V1.2.4.md)。
+验证未连接设备，也未请求真实中转；真实 AI 延迟、真机性能及白屏根因不在该验证结果内。诊断方法见 [V1.2.4 稳定性报告](STABILITY_V1.2.4.md)。
 
 ## 真机性能验收表（待执行）
 
@@ -132,4 +134,4 @@ adb install -r ".\releases\DDL_Reminder_v1.2.5_debug.apk"
 - `smartadd/ModelSpeedBenchmark.kt`：主动固定样例串行测速。
 - `ui/smartadd/SmartAddViewModel.kt`、`SmartAddScreen.kt`：接入路由/页面去重、通用 Loading 文字；Insets 不变。
 - `ui/settings/SettingsViewModel.kt`、`SettingsScreen.kt`：双模型配置、分别连接测试、安全诊断、Debug 测速。
-- Gradle 版本号、README、新增/调整回归测试。本次无新依赖。
+- Gradle 版本号、README、新增/调整回归测试。该版本无新依赖。

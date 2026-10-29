@@ -16,7 +16,7 @@ data class AiSettings(
 ) {
     val currentModel: String get() = fastModel.trim().ifBlank { modelName.trim().ifBlank { DEFAULT_MODEL } }
     val isConfigured: Boolean get() = baseUrl.isNotBlank() && apiKey.isNotBlank()
-    /** V1.2.6 升级优先旧 fastModel，再旧 Model Name；不覆盖凭证、隐私确认或旧 strong 字段。 */
+    /** 按 fastModel、modelName、默认值的顺序读取旧配置。 */
     fun forSingleModel(): AiSettings = normalized().copy(modelName = currentModel, fastModel = currentModel)
     fun normalized(): AiSettings = copy(
         baseUrl = cleanBaseUrl(baseUrl), apiKey = apiKey.trim(), modelName = modelName.trim(),
@@ -54,7 +54,7 @@ class SecureAiSettingsRepository(context: Context) : AiSettingsRepository {
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
         )
     }.getOrElse {
-        // Robolectric 等没有 AndroidKeyStore 的环境使用隔离测试存储；真机仍走上面的加密实现。
+        // Keystore 不可用时使用独立的普通存储；该分支不提供加密保护。
         context.getSharedPreferences("ai_settings_test_fallback", Context.MODE_PRIVATE)
     } }
 

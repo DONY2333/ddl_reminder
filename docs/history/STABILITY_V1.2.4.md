@@ -1,6 +1,8 @@
 # V1.2.4 稳定性修复报告
 
-版本：versionName `1.2.4`，versionCode `9`。本次不新增产品功能，不增加服务器、统计 SDK 或数据库迁移。
+> 历史记录：以下内容描述该版本发布时的实现和验证结果。当前行为见[项目首页](../../README.md)，版本演进见[版本记录](../../CHANGELOG.md)。文中代码及 APK 路径均相对仓库根目录。
+
+版本：versionName `1.2.4`，versionCode `9`。该版本不新增产品功能，不增加服务器、统计 SDK 或数据库迁移。
 
 ## 三个 P0 的证据与处理
 
@@ -28,7 +30,7 @@ Compose 测试检查模拟状态栏 Insets 下标题/首项完整、TopAppBar �
 
 ### Bug 3：偶发整页白屏
 
-**已增加防护与诊断，但尚未捕获原始白屏根因，不能声称彻底修复。**
+**发布时已增加防护与诊断，但尚未捕获原始白屏根因。**
 
 确认并保护的风险路径：
 
@@ -67,18 +69,18 @@ adb shell run-as com.example.ddlreminder cat shared_prefs/stability_diagnostics.
 
 ## 构建与测试
 
-命令（网络仓库不可达时本次使用现有缓存 `--offline`，不是跳过测试）：
+验证命令（网络仓库不可达，使用现有依赖缓存离线执行）：
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --offline
 .\gradlew.bat compileDebugAndroidTestKotlin --offline
 .\gradlew.bat assembleDebug --offline
 .\gradlew.bat lintDebug --offline
-# 连接设备/模拟器后执行；无设备时不宣称执行过：
+# 需要连接设备或模拟器：
 .\gradlew.bat connectedDebugAndroidTest
 ```
 
-本次实际结果：
+验证结果：
 
 - `testDebugUnitTest`：通过，198 项，0 失败、0 错误、0 跳过；相对原 127 项新增 71 项。其中 10 项为 Robolectric Compose 布局测试，键盘视口为模拟约束。
 - `assembleDebug`：通过。
@@ -108,4 +110,4 @@ adb shell run-as com.example.ddlreminder cat shared_prefs/stability_diagnostics.
 - 辅助容错：StabilityDiagnostics、MainActivity、DdlReminderApplication、DdlRepository、EventLogger、CsvExportManager、AlarmReceiver/BootReceiver/AndroidAlarmScheduler、AiSettingsRepository。
 - Manifest 仅补 adjustResize；Gradle 版本更新和测试依赖；新增回归/设备测试。
 - AppDatabase、DdlEntity、ScheduleExtractionPrompt 与修改前文件哈希相同。Room 保持 5，无 destructive migration；旧显式迁移链仍保留。
-- 历史 releases APK 不覆盖；本次目标为 `releases/DDL_Reminder_v1.2.4_debug.apk`。
+- 历史 releases APK 不覆盖；版本归档为 `releases/DDL_Reminder_v1.2.4_debug.apk`。

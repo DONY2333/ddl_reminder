@@ -40,7 +40,7 @@ data class BenchmarkState(
     }.trim()
 }
 
-/** 仅 Debug UI 主动触发：同一复杂样例，Fast 两次、Strong 两次，串行且不网络重试。 */
+/** 开发测速：同一样例按两个模型各执行两次，串行请求且不重试。 */
 class ModelSpeedBenchmark(
     private val client: AiApiClient,
     private val requestTimeoutMs: Long = 15_000,
@@ -56,7 +56,7 @@ class ModelSpeedBenchmark(
             if (config.fastModel == config.strongModel) {
                 state = state.copy(message = "两个模型配置相同")
             } else {
-                // 独立适配器只用于测速，绝不更改正常 Smart Add 的 complete/retry 行为。
+                // 测速使用单次请求适配器，与正常解析的重试策略隔离。
                 val oneShot = object : AiApiClient {
                     override suspend fun complete(config: AiSettings, systemPrompt: String, userPrompt: String) =
                         client.completeWithoutRetry(config, systemPrompt, userPrompt)

@@ -1,5 +1,7 @@
 # V1.2.7 单模型配置与 UI 简化
 
+> 历史记录：以下内容描述该版本发布时的实现和验证结果。当前行为见[项目首页](../../README.md)，版本演进见[版本记录](../../CHANGELOG.md)。文中代码及 APK 路径均相对仓库根目录。
+
 版本：versionName 1.2.7，versionCode 12。
 
 ## 最终链路
@@ -19,19 +21,19 @@ AI 默认值位于 `settings/AiSettingsRepository.kt` 的 `AiSettings.DEFAULT_MO
 - JSON 容错、具体网络诊断、NavigationSafety、RecoveryPage、StabilityDiagnostics、重复点击防护和 Preview 缓存保留。
 - Room 版本 5，未修改数据库及 Migration。ScheduleExtractionPrompt 文件与 V1.2.6 SHA-256 相同，未修改业务语义。
 
-## 修改文件
+## 相关文件
 
 主代码：`AiSettingsRepository.kt`、`TieredNaturalLanguageParser.kt`、`ParsePerformance.kt`、`SettingsViewModel.kt`、`SettingsScreen.kt`、`SmartAddScreen.kt`；版本：`app/build.gradle.kts`；文档：README、本报告。
 
 测试：更新 AiModelSettingsTest、TieredParserTest、SettingsAiPerformanceTest、SmartAddLayoutTest、SmartAddStateStabilityTest，新增 SettingsSingleModelUiTest。新增 10 项测试，原双模型升级测试按新单模型预期更新，未删减 Benchmark 测试。
 
-## 验证与交付
+## 构建与验证
 
 - `testDebugUnitTest --offline`：303 项，0 失败、0 错误、0 跳过。
 - `assembleDebug --offline`：BUILD SUCCESSFUL。
 - `lintDebug --offline`：BUILD SUCCESSFUL，0 Error、6 Warning。
 - adb 无设备，未执行 connectedDebugAndroidTest；Compose UI 测试使用 Robolectric。
-- 军理通知在模拟响应的 Parser/真实 ViewModel 状态回归中保持 1 个事件、备忘完整、进入 Preview，未请求旧 Strong。未使用用户真实 API 进行模型验收，不将固定响应测试等同于模型真实准确率。
+- 军理通知在模拟响应的 Parser/真实 ViewModel 状态回归中保持 1 个事件、备忘完整、进入 Preview，未请求旧 Strong。该回归使用固定模拟响应，真实 API 的模型准确率未在此验证。
 
 默认 APK：`app/build/outputs/apk/debug/app-debug.apk`（相对项目根目录）。
 
@@ -45,7 +47,7 @@ AI 默认值位于 `settings/AiSettingsRepository.kt` 的 `AiSettings.DEFAULT_MO
 adb install -r ".\releases\DDL_Reminder_v1.2.7_debug.apk"
 ```
 
-## 真机重点验证
+## 实机回归清单
 
 1. 从 V1.2.6 覆盖安装，已有 DDL/提醒不变；原 fastModel 显示在单一 AI 模型框，地址、Key、隐私确认保留。
 2. 简单句“明天下午3点开班会”直接预览，复杂军理通知只请求当前模型；必要时修改中转实际 Model ID。
@@ -53,4 +55,4 @@ adb install -r ".\releases\DDL_Reminder_v1.2.7_debug.apk"
 4. 401、断网或慢网失败有可见提示、本地回退，无第二模型请求；失败后可重试。
 5. 设置中无高级模型或测速入口；连接测试只测试当前字段的模型。
 
-历史偶发白屏的原始根因仍未捕获；本次没有修改相关防护，也不宣称彻底解决历史白屏。
+发布时尚未定位历史白屏的原始根因；该版本沿用了此前的诊断和恢复机制。

@@ -6,7 +6,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.ZoneId
 
-/** 保留类名兼容现有依赖：本地快路径 → 单一可配置 AI → 保守本地回退，不再换模型。 */
+/** 简单日程在本地解析；复杂文本调用配置的 AI，失败后回退本地规则。 */
 class TieredNaturalLanguageParser(
     private val settings: AiSettings,
     private val client: AiApiClient,
@@ -17,13 +17,13 @@ class TieredNaturalLanguageParser(
     override suspend fun parse(text: String, nowMillis: Long, zoneId: ZoneId): ParseResult {
         val started = nanoTime()
         val local = LocalNaturalLanguageParser()
-        var fast: AiRequestStatus? = null
+        var requestStatus: AiRequestStatus? = null
         var route = ParseRoute.LOCAL
         val result = withTimeoutOrNull(timeoutMillis) {
             val simple = FastPathDetector.detect(text) == FastPath.LOCAL
             if (simple) {
                 val candidate = local.parse(text, nowMillis, zoneId)
-                // Detector 不代替校验；无效日期/时间等仍交 AI，而不是错误地当作快路径成功。
+                // 快路径仍需校验日期和时间；明确写出的时间不能被默认时间替代。
                 val draft = candidate.drafts.singleOrNull()
                 if (draft?.isValid == true && (!FastPathDetector.hasExplicitTime(text) || !draft.usedDefaultTime)) return@withTimeoutOrNull candidate
             }
@@ -33,9 +33,9 @@ class TieredNaturalLanguageParser(
             currentCoroutineContext().ensureActive()
             onAiStarted()
             route = ParseRoute.AI
-            fast = pending(config, config.modelName)
+            requestStatus = pending(config, config.modelName)
             val aiResult = AiNaturalLanguageParser(config, client).parse(text, nowMillis, zoneId)
-            fast = aiResult.diagnostic
+            requestStatus = aiResult.diagnostic
             if (aiResult.aiErrorType == null && (aiResult.drafts.isNotEmpty() || !FastPathDetector.hasScheduleClue(text))) return@withTimeoutOrNull aiResult
             route = ParseRoute.LOCAL_FALLBACK
             local.parse(text, nowMillis, zoneId).copy(
@@ -46,9 +46,9 @@ class TieredNaturalLanguageParser(
         currentCoroutineContext().ensureActive()
         val final = result ?: local.parse(text, nowMillis, zoneId).copy(
             errorMessage = "AI解析失败，本次使用本地解析结果", usedAi = route != ParseRoute.LOCAL,
-            fellBackToLocal = route != ParseRoute.LOCAL, aiErrorType = "TOTAL_TIMEOUT", diagnostic = fast)
+            fellBackToLocal = route != ParseRoute.LOCAL, aiErrorType = "TOTAL_TIMEOUT", diagnostic = requestStatus)
         if (result == null && route != ParseRoute.LOCAL) route = ParseRoute.LOCAL_FALLBACK
-        val performance = ParsePerformance(route, fast, null,
+        val performance = ParsePerformance(route, requestStatus, null,
             ((nanoTime() - started) / 1_000_000).coerceAtLeast(0), final.drafts.size, timedOut = result == null)
         AiDiagnostics.publishParse(performance)
         return final.copy(performance = performance)

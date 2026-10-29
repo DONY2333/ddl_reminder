@@ -56,6 +56,8 @@ class SettingsSingleModelUiTest {
         compose.onNodeWithText("测试高级模型").assertDoesNotExist()
         compose.onAllNodes(hasText("模型速度测试", substring = true)).assertCountEquals(0)
         compose.onNodeWithText("测试 AI 连接").assertExists()
+        compose.onNodeWithText("高级诊断").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("收起高级诊断").assertDoesNotExist()
     }
 
     @Test fun `old fast custom ID appears in single editable model field`() {

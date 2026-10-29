@@ -137,7 +137,7 @@ class LocalNaturalLanguageParser : NaturalLanguageParser {
     }
 
     private fun extractTitle(source: String): String {
-        // 简单句的前置日期/时间不是标题；仍复用原有事件提取，不在 Detector 再造解析器。
+        // 提取标题前移除简单句开头的日期和时间。
         val text = source.replace(Regex("^(?:今天|明天|后天|(?:下周|这周|本周|周)[一二三四五六日天]|(?:\\d{4}年)?\\d{1,2}月\\d{1,2}[号日]?)(?:(?:凌晨|早上|上午|中午|下午|晚上)?(?:\\d{1,2}:\\d{2}|[零〇一二两三四五六七八九十\\d]{1,3}点(?:半|[零〇一二两三四五六七八九十\\d]{1,2}分)?))?"), "")
         Regex("([\\p{L}\\d]{0,16}(?:考试|体测|测验))").find(text)?.let { return it.groupValues[1].replace(Regex("^(?:原定|暂定|安排|本次)"), "").takeLast(20) }
         Regex("(?:交|提交)([^，。；]{0,20}?(?:作业|报告|论文|材料|申请))").find(text)?.let { return it.groupValues[1] }
