@@ -2,7 +2,11 @@
 
 一个本地优先的 Android App，用于记录课程或任务截止时间，并在截止前发送系统通知。项目面向初学 Android、已有 C++ 基础的读者，刻意保持单模块、少依赖、易追踪。当前版本为 V1.2.7（versionCode 12），简化为单一 AI 模型，默认 gpt-6-luna。
 
-[下载 V1.2.7 APK](https://github.com/DONY2333/ddl_reminder/releases/tag/v1.2.7) · [自动构建检查](https://github.com/DONY2333/ddl_reminder/actions/workflows/android.yml) · [问题反馈](https://github.com/DONY2333/ddl_reminder/issues)
+[下载 V1.2.7 APK](https://github.com/DONY2333/ddl_reminder/releases/tag/v1.2.7) · [自动构建检查](https://github.com/DONY2333/ddl_reminder/actions/workflows/android.yml) · [问题反馈](https://github.com/DONY2333/ddl_reminder/issues) · [Apache-2.0 许可证](LICENSE)
+
+## 许可证
+
+Copyright 2026 DONY2333。项目代码采用 [Apache License 2.0](LICENSE)，使用与分发时请遵守其中的版权声明、修改说明和许可要求。第三方依赖仍适用各自的许可证。
 
 ## 界面预览
 
