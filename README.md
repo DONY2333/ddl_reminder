@@ -2,13 +2,45 @@
 
 一个本地优先的 Android App，用于记录课程或任务截止时间，并在截止前发送系统通知。项目面向初学 Android、已有 C++ 基础的读者，刻意保持单模块、少依赖、易追踪。当前版本为 V1.2.7（versionCode 12），简化为单一 AI 模型，默认 gpt-6-luna。
 
+[下载 V1.2.7 APK](https://github.com/DONY2333/ddl_reminder/releases/tag/v1.2.7) · [自动构建检查](https://github.com/DONY2333/ddl_reminder/actions/workflows/android.yml) · [问题反馈](https://github.com/DONY2333/ddl_reminder/issues)
+
+## 界面预览
+
+<table>
+  <tr><th>月历与任务</th><th>智能添加预览</th><th>备忘与独立提醒</th></tr>
+  <tr>
+    <td valign="top"><img src="docs/images/home-calendar.jpg" alt="月历首页、未来三天与当日任务" width="240"></td>
+    <td valign="top"><img src="docs/images/smart-add-preview.jpg" alt="自然语言解析后确认日程" width="240"></td>
+    <td valign="top"><img src="docs/images/ddl-editor.jpg" alt="编辑备忘、截止时间与独立提醒" width="240"></td>
+  </tr>
+</table>
+
+<details>
+<summary>数据与隐私设置</summary>
+
+<img src="docs/images/data-privacy.jpg" alt="本地匿名记录说明、导出与清空操作" width="480">
+
+</details>
+
+截图来自用户提供的实机界面，仅用于功能展示；作业编号已遮挡。Debug 测试通知按钮不属于正式版功能。旧双模型诊断截图未作为当前版本展示。
+
+## 下载与安装
+
+从 [GitHub Release](https://github.com/DONY2333/ddl_reminder/releases/tag/v1.2.7) 下载 `DDL_Reminder_v1.2.7_debug.apk`，复制到 Android 8.0（API 26）或更新系统的手机并安装。首次使用按提示授予通知及闹钟权限；不配置 AI 也能手动添加和本地解析。
+
+这是学习与演示用 **Debug / Beta APK**。使用相同签名、相同 applicationId 的旧版可覆盖安装；不同签名无法直接覆盖。卸载会删除本机数据，请先确认备份需求。
+
+## 仓库自动检查
+
+GitHub Actions 在 push、Pull Request 和手动触发时分别运行 `testDebugUnitTest`、`assembleDebug`、`lintDebug`，保留测试报告、lint 报告与本次 CI 的 Debug APK。CI 产物不会覆盖 `releases/` 历史归档；设备通知、真实 AI 服务与系统权限仍需真机验证。
+
 ## 公开版本范围
 
 本仓库发布 **V1.2.7 / versionCode 12** 的 Android 客户端，保留该版本及之前实现的功能、测试、版本报告和历史 APK。所有任务与日志保存在本机，AI 为可选的 BYOK（用户自行配置 API）模式；不包含后端、云端部署脚本、云端接入改造或后续部署资料。
 
 解析链路：Local Fast Path → 单一可配置 AI → AI 失败时保守本地 fallback。预览确认后才写入任务；普通设置只有 API 地址、Key、模型。没有配置 AI 时仍可使用手动添加和本地解析。
 
-V1.2.7 已有验证记录：testDebugUnitTest **303 项通过、0 失败、0 跳过**，assembleDebug 通过，lintDebug **0 Error / 6 Warning**；没有连接设备时未执行 connectedDebugAndroidTest 或真机压测。这是 Demo/Beta 基线，不是生产上线或真实模型准确率证明。本次公开整理只调整文档及 Git 忽略规则，不修改运行时代码、Prompt 或 Room version 5。
+V1.2.7 已有验证记录：testDebugUnitTest **303 项通过、0 失败、0 跳过**，assembleDebug 通过，lintDebug **0 Error / 6 Warning**；没有连接设备时未执行 connectedDebugAndroidTest 或真机压测。这是 Demo/Beta 基线，不是生产上线或真实模型准确率证明。本次公开整理仅涉及文档、展示图片及 CI，不修改运行时代码、Prompt 或 Room version 5。
 
 版本归档：[DDL_Reminder_v1.2.7_debug.apk](releases/DDL_Reminder_v1.2.7_debug.apk)。SHA-256：`F1C1A732C71D527ED39EC8EC6ACBF3080D80244DD242AF6199DA94B9774DA3F3`。所有历史 APK 保留，不因重新构建而覆盖；重新构建的默认 APK 不保证与历史归档字节一致。
 
@@ -319,9 +351,9 @@ Debug 包可在首页点击“1 分钟后测试通知（Debug）”做真机端�
 - 增加匿名本地行为日志。
 - 支持通过系统分享面板导出 CSV，并可单独清空匿名日志。
 
-## 已知限制
+## 当前状态与已知限制
 
-- 历史偶发白屏的原始根因尚未完全捕获，不能宣称彻底修复；保留本地诊断与错误恢复，真机复现时需抓取 Logcat。
+- 用户已确认此前白屏问题解决；旧版稳定性报告保留当时的排查记录，不代表当前问题状态。本次文档整理未新增真机复测或推断根因；本地诊断与错误恢复继续保留，若再发生异常可抓取 Logcat。
 - Keystore 初始化失败时现有实现会退到普通 SharedPreferences；本公开版本不构成生产级凭证保护承诺。不要把真实 API Key 或签名私钥提交到仓库。
 - Android 厂商省电策略可能延迟或限制后台提醒。
 - 用户对 App 执行“强行停止”后，系统通常不会投递闹钟，直到再次手动打开 App。
