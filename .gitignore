@@ -1,0 +1,30 @@
+*.iml
+.gradle/
+.idea/
+local.properties
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# Local credentials, signing material, user data and logs must never be published.
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+*.jks
+*.keystore
+*.pem
+*.p12
+*.pfx
+keystore.properties
+secrets.properties
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Post-V1.2.7 machine-specific handoff/audit, outside the public snapshot scope.
+/FINAL_AUDIT.md

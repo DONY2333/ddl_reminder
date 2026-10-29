@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 白色日历主体 -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M25,25h58a7,7 0,0 1,7 7v51a7,7 0,0 1,-7 7h-58a7,7 0,0 1,-7 -7v-51a7,7 0,0 1,7 -7z" />
+    <!-- 高对比橙色日历页眉 -->
+    <path android:fillColor="#FFFFA62B"
+        android:pathData="M18,32a7,7 0,0 1,7 -7h58a7,7 0,0 1,7 7v14h-72z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M32,18h6v16h-6zM70,18h6v16h-6z" />
+    <!-- 时钟 -->
+    <path android:fillColor="#FF42C6A5"
+        android:pathData="M62,54a18,18 0,1 1,0 36a18,18 0,0 1,0 -36z" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M59,60h6v13l9,6l-3.5,5l-11.5,-8z" />
+    <!-- 日历上的勾选 -->
+    <path android:fillColor="#FF244C93"
+        android:pathData="M29,62l5,-5l7,7l12,-12l5,5l-17,17z" />
+</vector>
